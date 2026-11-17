@@ -61,7 +61,8 @@ jobs:
           timeout 600 sampctl ensure --platform linux
           python ../../tools/ensure_mapandreas.py --runtime .
           python ../../tools/ensure_mysql_include.py --runtime .
-          timeout 300 sampctl build
+          sampctl build dev --dryRun
+          timeout 300 sampctl build dev
           test -s gamemodes/main.amx
       - name: Upload compiled Pawn bytecode
         if: success()

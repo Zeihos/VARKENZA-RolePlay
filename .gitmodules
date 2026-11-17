@@ -1,0 +1,3 @@
+[submodule "upstream/open.RP"]
+	path = upstream/open.RP
+	url = https://github.com/ZanderOperator/open.RP.git

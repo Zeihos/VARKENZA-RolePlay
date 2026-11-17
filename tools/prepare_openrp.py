@@ -9,6 +9,8 @@ import shutil
 import stat
 import sys
 
+from normalize_pawn_includes import normalize_pawn_includes
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_DIRS = ('gamemodes', 'filterscripts', 'legacy', 'Maps', 'models', 'plugins', 'scriptfiles')
 MARKER = '.varkenza-generated'
@@ -53,6 +55,9 @@ def patch_sources(destination, settings):
                        '#define SERVER_NAME "VARKENZA ROLEPLAY"', 'SERVER_NAME')
     text = replace_one(text, r'^#define[ \t]+WEB_URL[ \t]+"https://open\.mp/"[ \t]*$',
                        '#define WEB_URL "https://varkenza-rp.com/"', 'WEB_URL')
+    # Linux build hosts resolve includes case-sensitively; upstream has rbits.inc.
+    text = replace_one(text, r'^#include[ \t]+<rBits>(?:[ \t]*//[^\n]*)?[ \t]*$',
+                       '#include <rbits>', 'legacy rBits include')
     pwn.write_text(text, encoding='utf-8')
 
     init = destination / 'gamemodes' / 'modules' / 'Server' / 'GameModeInit.pwn'
@@ -66,6 +71,16 @@ def patch_sources(destination, settings):
     data = json.loads(manifest.read_text(encoding='utf-8-sig'))
     if data.get('entry') != 'gamemodes/main.pwn' or data.get('runtime', {}).get('version') != '0.3.DL':
         raise ValueError('Unsupported upstream manifest. Check runtime and Pawn entry before updating.')
+    # Original upstream references a plugin with no downloadable release.
+    # Use the published x86 Linux/Windows MapAndreas assets, pinned by tag.
+    dependencies = data.get('dependencies', [])
+    old_mapandreas = 'Southclaws/samp-plugin-mapandreas'
+    if old_mapandreas not in dependencies:
+        raise ValueError('Upstream MapAndreas dependency changed; review the migration')
+    data['dependencies'] = [
+        'philip1337/samp-plugin-mapandreas:v1.2.1' if value == old_mapandreas else value
+        for value in dependencies
+    ]
     data['user'], data['repo'] = 'Zeihos', 'VARKENZA-RolePlay'
     runtime = data['runtime']
     runtime['hostname'] = 'VARKENZA ROLEPLAY | Development'
@@ -112,7 +127,14 @@ def prepare(source, destination, env, replace=False):
             source_file = source / name
             if source_file.is_file():
                 shutil.copy2(source_file, destination / name)
+        # Windows plugins in the pinned upstream reference these runtime DLLs.
+        # Copy them from the checked-out upstream; never vendor binary blobs here.
+        for name in ('libmariadb.dll', 'log-core.dll'):
+            source_file = source / name
+            if source_file.is_file():
+                shutil.copy2(source_file, destination / name)
         patch_sources(destination, settings)
+        normalize_pawn_includes(destination)
     except Exception:
         shutil.rmtree(destination)
         raise

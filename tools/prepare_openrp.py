@@ -9,6 +9,8 @@ import shutil
 import stat
 import sys
 
+from normalize_pawn_includes import normalize_pawn_includes
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_DIRS = ('gamemodes', 'filterscripts', 'legacy', 'Maps', 'models', 'plugins', 'scriptfiles')
 MARKER = '.varkenza-generated'
@@ -132,6 +134,7 @@ def prepare(source, destination, env, replace=False):
             if source_file.is_file():
                 shutil.copy2(source_file, destination / name)
         patch_sources(destination, settings)
+        normalize_pawn_includes(destination)
     except Exception:
         shutil.rmtree(destination)
         raise

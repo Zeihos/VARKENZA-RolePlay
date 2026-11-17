@@ -54,7 +54,7 @@ def patch_sources(destination, settings):
     text = replace_one(text, r'^#define[ \t]+WEB_URL[ \t]+"https://open\.mp/"[ \t]*$',
                        '#define WEB_URL "https://varkenza-rp.com/"', 'WEB_URL')
     # Linux build hosts resolve includes case-sensitively; upstream has rbits.inc.
-    text = replace_one(text, r'^#include[ \t]+<rBits>[ \t]*$',
+    text = replace_one(text, r'^#include[ \t]+<rBits>(?:[ \t]*//[^\n]*)?[ \t]*$',
                        '#include <rbits>', 'legacy rBits include')
     pwn.write_text(text, encoding='utf-8')
 

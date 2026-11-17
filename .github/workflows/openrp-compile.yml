@@ -51,6 +51,8 @@ jobs:
         run: python tools/prepare_openrp.py
       - name: Compile legacy Pawn gamemode
         id: pawn
+        env:
+          SAMPCTL_GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail

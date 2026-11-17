@@ -1,11 +1,12 @@
 'use strict';
 
-// VARKENZA v0.6 — local website + opt-in localhost Pawn game bridge.
+// VARKENZA local website + opt-in localhost Pawn game bridge.
 // This is a prototype, NOT a production-ready identity/game backend.
 const http = require('node:http');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { version: APP_VERSION } = require('./package.json');
 const { makePlayerApi } = require('./lib/player-api');
 const { makeGameBridge } = require('./lib/game-bridge');
 const staffAuth = require('./lib/staff-auth');
@@ -175,7 +176,7 @@ async function handler(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = url.pathname;
-    if (req.method === 'GET' && pathname === '/healthz') return send(res, 200, { ok: true, service: 'VARKENZA Foundation', version: '0.11.0' });
+    if (req.method === 'GET' && pathname === '/healthz') return send(res, 200, { ok: true, service: 'VARKENZA Foundation', version: APP_VERSION });
     if (req.method === 'GET' && pathname === '/api/site') {
       return send(res, 200, {
         name: 'VARKENZA ROLEPLAY', phase: 'Разработка', gameOnline: gameBridge.status().online,
@@ -379,9 +380,9 @@ async function handler(req, res) {
 const server = http.createServer(handler);
 if (require.main === module) {
   if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) throw new Error('PORT must be in 1..65535');
-  if (!['127.0.0.1', '::1'].includes(HOST)) throw new Error('Foundation v0.6 only supports loopback HOST for security.');
+  if (!['127.0.0.1', '::1'].includes(HOST)) throw new Error('VARKENZA local server only supports loopback HOST for security.');
   server.listen(PORT, HOST, () => {
-    console.log(`VARKENZA Foundation v0.6: http://${HOST}:${PORT}`);
+    console.log(`VARKENZA Foundation v${APP_VERSION}: http://${HOST}:${PORT}`);
     if (!ADMIN_READY) console.log('Admin demo disabled: configure ADMIN_EMAIL, ADMIN_PASSWORD and ADMIN_SESSION_SECRET.');
     console.log('DEV ONLY — not hardened for exposure on the public Internet.');
   });

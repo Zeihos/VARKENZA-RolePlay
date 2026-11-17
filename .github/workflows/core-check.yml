@@ -18,13 +18,15 @@ jobs:
       - name: Test banking and validate web JavaScript
         shell: bash
         run: |
-          node --test web/tests/banking-core.test.js
+          npm --prefix web test
           node --check web/server.js
           for file in web/lib/*.js web/public/js/*.js web/scripts/*.js; do
             node --check "$file"
           done
       - name: Check Python applications and helper
         run: python -m py_compile tools/prepare_openrp.py apps/admin-software/*.py apps/launcher/*.py
+      - name: Test Python helpers and documentation links
+        run: python -m unittest discover -s tools/tests -v
       - name: Enforce clean repository structure
         run: |
           python - <<'PY'
@@ -40,8 +42,12 @@ jobs:
           for path in required:
             assert Path(path).is_file(), f'Missing source: {path}'
           tracked = subprocess.check_output(['git', 'ls-files'], text=True).splitlines()
-          forbidden = [p for p in tracked if p.startswith('web/data/') or p.endswith(('.sqlite3', '.sqlite3-shm', '.sqlite3-wal', '.pyc'))]
-          assert not forbidden, f'Generated files tracked: {forbidden}'
+          secret_names = {'.env', 'mysql.ini', 'server.cfg', 'varkenza-bridge.cfg'}
+          forbidden = [p for p in tracked if (
+            p.startswith('web/data/') or p.endswith(('.sqlite3', '.sqlite3-shm', '.sqlite3-wal', '.pyc', '.amx'))
+            or p.split('/')[-1] in secret_names
+          )]
+          assert not forbidden, f'Private or generated files tracked: {forbidden}'
           assert not any(p.startswith('Файлы/') or p.startswith('Оформление/') for p in tracked), 'Old directories still tracked'
           print('Clean source structure verified.')
           PY

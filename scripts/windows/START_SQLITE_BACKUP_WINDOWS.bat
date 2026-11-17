@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0web"
+cd /d "%~dp0..\..\web"
 echo [VARKENZA] Creating SQLite backup...
 if exist .env (
   node --env-file=.env scripts/db-backup.js

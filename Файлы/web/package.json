@@ -1,0 +1,14 @@
+{
+  "name": "varkenza-foundation",
+  "version": "0.11.0",
+  "private": true,
+  "description": "VARKENZA local open.mp RP alpha: website, characters, transport, banking, staff and SQLite",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "db:backup": "node scripts/db-backup.js",
+    "db:doctor": "node scripts/db-doctor.js"
+  }
+}

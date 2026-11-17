@@ -1,0 +1,36 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#0b0d10"><title>Аккаунт игрока — VARKENZA ROLEPLAY</title><link rel="stylesheet" href="/css/site.css"><script src="/js/cabinet.js" defer></script></head><body>
+<header class="topbar container"><a class="brand" href="/">VARKENZA <span>ROLEPLAY</span></a><nav><a href="/">Главная</a><a href="/forum">Форум</a><a href="/cabinet" class="active">Мой аккаунт</a></nav><a class="button outline small" href="/login">Сотрудникам</a></header>
+<main class="container interior"><p class="eyebrow">VARKENZA ID • FOUNDATION 0.10</p><h1>Личный кабинет</h1><p class="sublead">Создавай тестовый профиль, выбирай персонажа и получай одноразовый код для входа на локальный open.mp сервер. Игровое подключение доступно, когда администратор настроил bridge.</p>
+<div class="notice">🛠️ Локальная версия для разработки. Не используйте реальные пароли и личные данные: это ещё не публичная система.</div>
+<div id="guest-area" class="admin-grid" hidden>
+<section class="panel"><p class="eyebrow">УЖЕ ЕСТЬ АККАУНТ</p><h2>Вход в VARKENZA ID</h2><form id="player-login"><label>Никнейм или Email<input name="identifier" required autocomplete="username"></label><label>Пароль<input name="password" type="password" required autocomplete="current-password"></label><button class="button primary wide">Войти</button></form></section>
+<section class="panel"><p class="eyebrow">СТАТЬ УЧАСТНИКОМ</p><h2>Регистрация</h2><form id="player-register"><label>Никнейм<input name="nickname" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" required placeholder="VarkenzaPlayer"></label><label>Email<input name="email" type="email" maxlength="254" required autocomplete="email" placeholder="user@example.com"></label><label>Пароль (12–128 символов)<input name="password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label><button class="button primary wide">Создать аккаунт</button></form></section>
+</div>
+<div id="member-area" hidden>
+<section class="dash-header panel"><div><p class="eyebrow">МОЙ ПРОФИЛЬ</p><h2 id="member-name">Игрок</h2><p id="member-email" class="dim"></p></div><button class="button outline small" id="player-logout">Выйти</button></section>
+<div class="stat-grid"><div class="stat-box"><strong id="stat-characters">0</strong><span>Персонажей / 3</span></div><div class="stat-box"><strong id="stat-tickets">0</strong><span>Обращений</span></div><div class="stat-box"><strong id="stat-reports">0</strong><span>Игровых репортов</span></div></div>
+<div class="admin-grid"><section class="panel"><p class="eyebrow">ROLEPLAY</p><h2>Мои персонажи</h2><div id="characters-list" class="item-list"></div><div class="notice" id="link-help">Чтобы зайти в игру, установи ник ровно как у персонажа (например, John_Walker, до 20 символов), нажми «Код входа» и в игре введи /link 12345678. Код действителен 5 минут, один раз.</div><p id="link-result" class="form-msg" role="status" aria-live="polite"></p><form id="character-form"><h3>Создать персонажа</h3><label>Имя (латиницей)<input name="firstName" required minlength="2" maxlength="16" pattern="[A-Za-z]{2,16}" placeholder="John"></label><label>Фамилия (латиницей)<input name="lastName" required minlength="2" maxlength="16" pattern="[A-Za-z]{2,16}" placeholder="Walker"></label><label>Внешность<select name="skin"><option value="26">Горожанин (26)</option><option value="7">Горожанин (7)</option><option value="46">Горожанин (46)</option><option value="60">Горожанин (60)</option><option value="98">Горожанин (98)</option><option value="188">Горожанин (188)</option><option value="193">Горожанин (193)</option><option value="211">Горожанин (211)</option><option value="250">Горожанин (250)</option><option value="0">Внешность (0)</option><option value="14">Внешность (14)</option><option value="120">Внешность (120)</option></select></label><button class="button primary">Создать персонажа</button></form></section>
+<section class="panel"><p class="eyebrow">ПОДДЕРЖКА</p><h2>Мои обращения</h2><div id="tickets-list" class="item-list"></div><form id="ticket-form"><h3>Новое обращение</h3><label>Категория<select name="category"><option value="question">Вопрос</option><option value="bug">Ошибка</option><option value="account">Аккаунт</option></select></label><label>Тема<input name="topic" required minlength="5" maxlength="100" placeholder="Проблема с аккаунтом"></label><label>Описание<textarea name="message" required minlength="15" maxlength="1500" rows="4"></textarea></label><button class="button primary">Отправить обращение</button></form></section></div>
+<section class="panel" id="bank-panel">
+<p class="eyebrow">VARKENZA BANK • ALPHA</p><h2>Банковский счёт персонажа</h2>
+<p class="dim">Наличные и банковский баланс сохраняются отдельно. Операции через сайт доступны только когда персонаж вне игры. Максимальная сумма одной операции — $1 000 000.</p>
+<label>Персонаж<select id="bank-character"></select></label>
+<p class="form-msg" id="bank-balance" aria-live="polite"></p>
+<form id="bank-form"><label>Операция<select name="action"><option value="DEPOSIT">Пополнить счёт</option><option value="WITHDRAW">Снять деньги</option></select></label>
+<label>Сумма в долларах<input name="amount" type="number" min="1" max="1000000" step="1" required></label>
+<button class="button primary">Выполнить</button></form><p class="form-msg" id="bank-message" role="status" aria-live="polite"></p>
+<p class="dim">В игре: /bank (баланс), /deposit 100, /withdraw 100 возле /gps bank.</p>
+</section>
+<section class="panel" id="garage-panel">
+<p class="eyebrow">VARKENZA AUTO • ALPHA</p><h2>Мой гараж и автосалон</h2>
+<p class="dim">До 3 автомобилей у одного персонажа. Покупка и продажа доступны после выхода из игры. Продажа возвращает 70% цены покупки.</p>
+<label>Персонаж<select id="garage-character"></select></label>
+<p class="form-msg" id="garage-message" role="status" aria-live="polite"></p>
+<h3>Мои автомобили</h3><div id="garage-owned" class="item-list"></div>
+<h3>Автосалон</h3><div id="garage-catalog" class="item-list"></div>
+<p class="dim">В игре: /garage, /car 1–3, /park. /engine — запуск двигателя, /lock — двери, /fuel — запас топлива, /refuel — заправиться ($4/ед.) на /gps fuel. Бак 60 единиц, двигатель по умолчанию выключен.</p>
+</section>
+<section class="panel"><h2>Мои игровые репорты</h2><p class="dim">Чтобы создать репорт, используй /report [текст] в игре после привязки персонажа.</p><div id="player-reports" class="item-list"></div></section>
+</div>
+<p id="cabinet-message" class="form-msg" role="status" aria-live="polite"></p>
+</main><footer class="footer"><div class="container footer-inner">VARKENZA ROLEPLAY • Веб-аккаунты v0.10 <span>Только локальная разработка</span></div></footer></body></html>

@@ -1,0 +1,11 @@
+{
+  "name": "VARKENZA ROLEPLAY | DEVELOPMENT",
+  "language": "Russian",
+  "max_players": 50,
+  "pawn": {
+    "main_scripts": ["varkenza 1"],
+    "legacy_plugins": [],
+    "side_scripts": []
+  },
+  "rcon": {"enable": false}
+}

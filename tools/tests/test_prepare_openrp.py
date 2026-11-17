@@ -28,6 +28,7 @@ class PreparationTests(unittest.TestCase):
         (source / 'gamemodes/modules/Server/GameModeInit.pwn').write_text('SendRconCommand("password hardcoded-legacy-secret"); // lock\n')
         (source / 'pawn.json').write_text(json.dumps({
             'entry': 'gamemodes/main.pwn',
+            'dependencies': ['pawn-lang/samp-stdlib', 'Southclaws/samp-plugin-mapandreas'],
             'runtime': {'version': '0.3.DL', 'rcon_password': '0000'},
             'runtimes': [{'name': 'dev', 'rcon_password': '0000'}]
         }))
@@ -43,6 +44,8 @@ class PreparationTests(unittest.TestCase):
             self.assertNotIn('hardcoded-legacy-secret', (output / 'gamemodes/modules/Server/GameModeInit.pwn').read_text())
             config = json.loads((output / 'pawn.json').read_text())
             self.assertEqual(config['runtime']['version'], '0.3.DL')
+            self.assertIn('philip1337/samp-plugin-mapandreas:v1.2.1', config['dependencies'])
+            self.assertNotIn('Southclaws/samp-plugin-mapandreas', config['dependencies'])
             self.assertEqual(config['runtime']['rcon_password'], PASSWORDS['VARKENZA_RCON_PASSWORD'])
             self.assertIn(PASSWORDS['VARKENZA_MYSQL_PASSWORD'], (output / 'mysql.ini').read_text())
             self.assertFalse((output / 'server.cfg').exists())

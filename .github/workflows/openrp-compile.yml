@@ -57,6 +57,7 @@ jobs:
           cd build/openrp
           sampctl version
           timeout 600 sampctl ensure --platform linux
+          python ../../tools/ensure_mapandreas.py --runtime .
           timeout 300 sampctl build
           test -s gamemodes/main.amx
       - name: Upload compiled Pawn bytecode

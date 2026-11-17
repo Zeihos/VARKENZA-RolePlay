@@ -56,8 +56,8 @@ jobs:
           set -euo pipefail
           cd build/openrp
           sampctl version
-          timeout 600 sampctl p ensure --platform linux
-          timeout 300 sampctl p build
+          timeout 600 sampctl ensure --platform linux
+          timeout 300 sampctl build
           test -s gamemodes/main.amx
       - name: Upload compiled Pawn bytecode
         if: success()
@@ -78,7 +78,7 @@ jobs:
             if [ "$RESULT" = success ]; then
               echo "Pawn bytecode compiled successfully in CI."
             else
-              echo "Compiler/dependency step did not pass; review the 'Attempt Pawn compile' logs."
+              echo "Compiler/dependency step did not pass; review the 'Compile legacy Pawn gamemode' logs."
             fi
             echo ""
             echo "Not an open.mp server integration or gameplay test."

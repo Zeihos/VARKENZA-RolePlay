@@ -1,5 +1,12 @@
-name: open.RP Pawn compiler (experimental)
+name: VARKENZA Pawn build
 on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/**"
+      - "upstream/**"
+      - ".gitmodules"
+      - ".github/workflows/openrp-compile.yml"
   pull_request:
     paths:
       - "tools/**"
@@ -42,9 +49,8 @@ jobs:
           VARKENZA_MYSQL_PASSWORD: ci-local-mysql-placeholder-only
           VARKENZA_RCON_PASSWORD: ci-local-rcon-placeholder-only
         run: python tools/prepare_openrp.py
-      - name: Attempt Pawn compile
+      - name: Compile legacy Pawn gamemode
         id: pawn
-        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -53,7 +59,15 @@ jobs:
           timeout 600 sampctl p ensure --platform linux
           timeout 300 sampctl p build
           test -s gamemodes/main.amx
-      - name: Report experimental compile status
+      - name: Upload compiled Pawn bytecode
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VARKENZA-openRP-Pawn-amx
+          path: build/openrp/gamemodes/main.amx
+          retention-days: 7
+          if-no-files-found: error
+      - name: Report compile status
         if: always()
         shell: bash
         env:

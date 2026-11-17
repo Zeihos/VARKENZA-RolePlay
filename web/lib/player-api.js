@@ -8,11 +8,12 @@ const { createStateStore } = require('./state-store');
 const { catalog, findModel, sellPrice, MAX_GARAGE_SLOTS } = require('./vehicle-catalog');
 const { vehicleState, repairPrice } = require('./vehicle-services');
 const { bankBalance, bankAmount, applyBankOperation } = require('./banking');
+const { playerSessionSecret } = require('./runtime-secrets');
 
 const STORE_FILE = process.env.VARKENZA_PLAYERS_FILE || path.join(__dirname, '..', 'data', 'players.json');
 const cookieName = 'vk_player_session';
-const secret = process.env.PLAYER_SESSION_SECRET && process.env.PLAYER_SESSION_SECRET.length >= 32
-  ? process.env.PLAYER_SESSION_SECRET : crypto.randomBytes(48).toString('hex');
+// Never use a publicly documented .env.example placeholder to sign sessions.
+const secret = playerSessionSecret(process.env.PLAYER_SESSION_SECRET);
 const sessions = new Map();
 const attempts = new Map();
 const SESSION_MS = 2 * 60 * 60 * 1000;

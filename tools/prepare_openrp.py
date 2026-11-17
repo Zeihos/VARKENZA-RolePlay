@@ -112,6 +112,12 @@ def prepare(source, destination, env, replace=False):
             source_file = source / name
             if source_file.is_file():
                 shutil.copy2(source_file, destination / name)
+        # Windows plugins in the pinned upstream reference these runtime DLLs.
+        # Copy them from the checked-out upstream; never vendor binary blobs here.
+        for name in ('libmariadb.dll', 'log-core.dll'):
+            source_file = source / name
+            if source_file.is_file():
+                shutil.copy2(source_file, destination / name)
         patch_sources(destination, settings)
     except Exception:
         shutil.rmtree(destination)

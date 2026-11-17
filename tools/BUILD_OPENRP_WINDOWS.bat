@@ -20,9 +20,9 @@ python tools\prepare_openrp.py --replace
 if errorlevel 1 exit /b 1
 pushd "build\openrp"
 echo [INFO] Preparing dependencies for legacy SA-MP 0.3.DL...
-sampctl p ensure --platform windows
+sampctl ensure --platform windows
 if errorlevel 1 (popd & exit /b 1)
-sampctl p build
+sampctl build
 if errorlevel 1 (popd & exit /b 1)
 popd
 echo [OK] Staged and built VARKENZA legacy gamemode.

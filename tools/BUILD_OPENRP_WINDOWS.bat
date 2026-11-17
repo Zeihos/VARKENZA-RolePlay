@@ -22,7 +22,11 @@ pushd "build\openrp"
 echo [INFO] Preparing dependencies for legacy SA-MP 0.3.DL...
 sampctl ensure --platform windows
 if errorlevel 1 (popd & exit /b 1)
-sampctl build
+python ..\..\tools\ensure_mapandreas.py --runtime .
+if errorlevel 1 (popd & exit /b 1)
+python ..\..\tools\ensure_mysql_include.py --runtime .
+if errorlevel 1 (popd & exit /b 1)
+sampctl build dev
 if errorlevel 1 (popd & exit /b 1)
 popd
 echo [OK] Staged and built VARKENZA legacy gamemode.

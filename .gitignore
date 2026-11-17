@@ -1,4 +1,4 @@
-# Local-only secrets and generated data
+# Local secrets and generated files
 web/.env
 **/varkenza-bridge.cfg
 web/data/
@@ -15,3 +15,7 @@ web/data/
 *.tmp
 node_modules/
 .env
+.env.local
+build/
+**/mysql.ini
+**/server.cfg

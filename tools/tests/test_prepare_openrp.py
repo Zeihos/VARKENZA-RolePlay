@@ -22,10 +22,13 @@ class PreparationTests(unittest.TestCase):
         (source / 'open_rp.sql').write_text('-- test database\n')
         (source / 'mysql.ini').write_text('password = 0000\n')
         (source / 'server.cfg').write_text('rcon_password 0000\n')
-        (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n')
+        (source / 'libmariadb.dll').write_bytes(b'fixture-library')
+        (source / 'log-core.dll').write_bytes(b'fixture-logging')
+        (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n#include <rBits> // legacy\n')
         (source / 'gamemodes/modules/Server/GameModeInit.pwn').write_text('SendRconCommand("password hardcoded-legacy-secret"); // lock\n')
         (source / 'pawn.json').write_text(json.dumps({
             'entry': 'gamemodes/main.pwn',
+            'dependencies': ['pawn-lang/samp-stdlib', 'Southclaws/samp-plugin-mapandreas'],
             'runtime': {'version': '0.3.DL', 'rcon_password': '0000'},
             'runtimes': [{'name': 'dev', 'rcon_password': '0000'}]
         }))
@@ -38,12 +41,17 @@ class PreparationTests(unittest.TestCase):
             prepare(src, output, PASSWORDS)
             self.assertIn('VARKENZA ROLEPLAY', (output / 'gamemodes/main.pwn').read_text())
             self.assertIn('varkenza-rp.com', (output / 'gamemodes/main.pwn').read_text())
+            self.assertIn('#include <rbits>', (output / 'gamemodes/main.pwn').read_text())
             self.assertNotIn('hardcoded-legacy-secret', (output / 'gamemodes/modules/Server/GameModeInit.pwn').read_text())
             config = json.loads((output / 'pawn.json').read_text())
             self.assertEqual(config['runtime']['version'], '0.3.DL')
+            self.assertIn('philip1337/samp-plugin-mapandreas:v1.2.1', config['dependencies'])
+            self.assertNotIn('Southclaws/samp-plugin-mapandreas', config['dependencies'])
             self.assertEqual(config['runtime']['rcon_password'], PASSWORDS['VARKENZA_RCON_PASSWORD'])
             self.assertIn(PASSWORDS['VARKENZA_MYSQL_PASSWORD'], (output / 'mysql.ini').read_text())
             self.assertFalse((output / 'server.cfg').exists())
+            self.assertEqual((output / 'libmariadb.dll').read_bytes(), b'fixture-library')
+            self.assertEqual((output / 'log-core.dll').read_bytes(), b'fixture-logging')
             self.assertEqual((src / 'gamemodes/main.pwn').read_text().splitlines()[0], '#define SERVER_NAME "open.RP"')
             with self.assertRaises(ValueError):
                 prepare(src, output, PASSWORDS)

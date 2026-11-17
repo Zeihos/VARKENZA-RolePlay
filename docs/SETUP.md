@@ -66,7 +66,9 @@ python tools/prepare_openrp.py
 
 Будет создана рабочая копия в `build/openrp` и приватный `mysql.ini`. Исходный подмодуль не изменяется. На Windows есть [`tools/BUILD_OPENRP_WINDOWS.bat`](../tools/BUILD_OPENRP_WINDOWS.bat), но **он пока не является подтверждённым способом получить рабочий сервер**.
 
-Точные этапы установки зависимостей и подтверждённые ошибки компиляции — в **[состоянии игровой сборки](BUILD_STATUS.md)**.\n\n> [!WARNING]
+Точные этапы установки зависимостей и подтверждённые ошибки компиляции — в **[состоянии игровой сборки](BUILD_STATUS.md)**.
+
+> [!WARNING]
 > В актуальной работе над сборкой были выявлены проблемы с зависимостями. Подробности — [задача #3](https://github.com/Zeihos/VARKENZA-RolePlay/issues/3) и [PR #5](https://github.com/Zeihos/VARKENZA-RolePlay/pull/5). Не смешивайте MySQL-базу `open.RP` с локальной SQLite-базой сайта.
 
 ## 4. Проверки разработчика

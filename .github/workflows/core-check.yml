@@ -18,7 +18,7 @@ jobs:
       - name: Test banking and validate web JavaScript
         shell: bash
         run: |
-          node --test web/tests/banking-core.test.js
+          npm --prefix web test
           node --check web/server.js
           for file in web/lib/*.js web/public/js/*.js web/scripts/*.js; do
             node --check "$file"

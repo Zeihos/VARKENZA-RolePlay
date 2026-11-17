@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0"
-python admin-software\monitor.py
+cd /d "%~dp0..\.."
+python apps\launcher\launcher.py
 if errorlevel 1 echo Python 3 with tkinter is required.
 pause

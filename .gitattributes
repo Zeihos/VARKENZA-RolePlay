@@ -1,0 +1,12 @@
+* text=auto
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.py text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.pwn text eol=lf
+*.inc text eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary

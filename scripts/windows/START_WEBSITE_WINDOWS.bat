@@ -1,4 +1,4 @@
 @echo off
-cd /d "%~dp0web"
+cd /d "%~dp0..\..\web"
 node server.js
 pause

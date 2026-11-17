@@ -1,21 +1,37 @@
-# Local secrets and generated files
-web/.env
-**/varkenza-bridge.cfg
-web/data/
-*.sqlite3
-*.sqlite3-wal
-*.sqlite3-shm
-*.db
-*.db-wal
-*.db-shm
-*.log
-*.pyc
-**/__pycache__/
-*.amx
-*.tmp
-node_modules/
+# Private configuration
 .env
-.env.local
-build/
+.env.*
+!.env.example
+**/varkenza-bridge.cfg
 **/mysql.ini
 **/server.cfg
+**/config.json
+
+# Generated user data and logs
+web/data/
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.log
+logs/
+server_log.txt
+crashinfo.txt
+
+# Build outputs and dependency downloads
+build/
+node_modules/
+dependencies/
+pawn.lock
+*.amx
+*.exe
+*.dll
+*.so
+*.tmp
+*.pyc
+**/__pycache__/
+
+# OS/editor caches
+.DS_Store
+Thumbs.db
+*.swp

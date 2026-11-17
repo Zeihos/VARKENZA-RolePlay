@@ -24,6 +24,8 @@ sampctl ensure --platform windows
 if errorlevel 1 (popd & exit /b 1)
 python ..\..\tools\ensure_mapandreas.py --runtime .
 if errorlevel 1 (popd & exit /b 1)
+python ..\..\tools\ensure_mysql_include.py --runtime .
+if errorlevel 1 (popd & exit /b 1)
 sampctl build
 if errorlevel 1 (popd & exit /b 1)
 popd

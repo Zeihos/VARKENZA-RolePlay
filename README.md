@@ -1,6 +1,8 @@
 <div align="center">
 
-<img src="assets/branding/cover.jpg" alt="VARKENZA ROLEPLAY — официальная обложка проекта" width="100%">
+<a href="https://github.com/Zeihos/VARKENZA-RolePlay"><img src="assets/branding/logo.png" alt="Логотип VARKENZA ROLEPLAY" width="100"></a>
+
+<img src="assets/branding/cover.jpg" alt="VARKENZA ROLEPLAY — фирменная обложка проекта" width="100%">
 
 # VARKENZA ROLEPLAY
 
@@ -13,12 +15,29 @@
 [![Подготовка open.RP](https://github.com/Zeihos/VARKENZA-RolePlay/actions/workflows/openrp-integration.yml/badge.svg?branch=main)](https://github.com/Zeihos/VARKENZA-RolePlay/actions/workflows/openrp-integration.yml)
 [![Язык](https://img.shields.io/badge/документация-русский-2C80C9?style=flat-square)](README.md)
 
-**[Обзор](#о-проекте) · [Скриншоты](#интерфейсы) · [Установка](#как-запустить) · [Разработка](#текущий-статус) · [Участие](#участие-в-проекте)**
+**[О проекте](#о-проекте) · [Интерфейсы](#интерфейсы) · [Быстрый запуск](#как-запустить) · [Статус](#текущий-статус) · [Как помочь](#участие-в-проекте)**
 
 </div>
 
 > [!IMPORTANT]
 > **VARKENZA находится в технической альфе.** Это открытый репозиторий с исходниками и прототипами, **не готовый сервер для публичной игры**. Прохождение тестов сайта и подготовки игрового мода не подтверждает его компиляцию, совместимость с open.mp или работу с реальными игроками.
+
+<table align="center">
+  <tr>
+    <td align="center" width="33%">
+      <a href="docs/SETUP.md"><strong>⚙️ Установка</strong></a><br>
+      <sub>Локальный запуск сайта и подготовка игры</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="docs/ROADMAP.md"><strong>🗺️ Дорожная карта</strong></a><br>
+      <sub>Что реализовано и какие задачи впереди</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="docs/ARCHITECTURE.md"><strong>🧩 Архитектура</strong></a><br>
+      <sub>Как связаны игровой мод, сайт и приложения</sub>
+    </td>
+  </tr>
+</table>
 
 ## О проекте
 
@@ -77,6 +96,9 @@ node --env-file=.env server.js
 
 ## Структура репозитория
 
+**[Схема архитектуры и план интеграции →](docs/ARCHITECTURE.md)**
+
+
 ```text
 VARKENZA-RolePlay/
 ├── assets/            Фирменное оформление, публикации и превью
@@ -122,6 +144,6 @@ VARKENZA-RolePlay/
 
 **VARKENZA ROLEPLAY**
 
-<sub>Разрабатываем постепенно. Проверяем изменения. Не называем альфу релизом.</sub>
+<sub>Открытая разработка · Русскоязычная документация · Техническая альфа</sub>
 
 </div>

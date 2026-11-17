@@ -22,6 +22,8 @@ class PreparationTests(unittest.TestCase):
         (source / 'open_rp.sql').write_text('-- test database\n')
         (source / 'mysql.ini').write_text('password = 0000\n')
         (source / 'server.cfg').write_text('rcon_password 0000\n')
+        (source / 'libmariadb.dll').write_bytes(b'fixture-library')
+        (source / 'log-core.dll').write_bytes(b'fixture-logging')
         (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n')
         (source / 'gamemodes/modules/Server/GameModeInit.pwn').write_text('SendRconCommand("password hardcoded-legacy-secret"); // lock\n')
         (source / 'pawn.json').write_text(json.dumps({
@@ -44,6 +46,8 @@ class PreparationTests(unittest.TestCase):
             self.assertEqual(config['runtime']['rcon_password'], PASSWORDS['VARKENZA_RCON_PASSWORD'])
             self.assertIn(PASSWORDS['VARKENZA_MYSQL_PASSWORD'], (output / 'mysql.ini').read_text())
             self.assertFalse((output / 'server.cfg').exists())
+            self.assertEqual((output / 'libmariadb.dll').read_bytes(), b'fixture-library')
+            self.assertEqual((output / 'log-core.dll').read_bytes(), b'fixture-logging')
             self.assertEqual((src / 'gamemodes/main.pwn').read_text().splitlines()[0], '#define SERVER_NAME "open.RP"')
             with self.assertRaises(ValueError):
                 prepare(src, output, PASSWORDS)

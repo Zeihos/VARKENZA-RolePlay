@@ -24,7 +24,7 @@ class PreparationTests(unittest.TestCase):
         (source / 'server.cfg').write_text('rcon_password 0000\n')
         (source / 'libmariadb.dll').write_bytes(b'fixture-library')
         (source / 'log-core.dll').write_bytes(b'fixture-logging')
-        (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n')
+        (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n#include <rBits>\n')
         (source / 'gamemodes/modules/Server/GameModeInit.pwn').write_text('SendRconCommand("password hardcoded-legacy-secret"); // lock\n')
         (source / 'pawn.json').write_text(json.dumps({
             'entry': 'gamemodes/main.pwn',
@@ -41,6 +41,7 @@ class PreparationTests(unittest.TestCase):
             prepare(src, output, PASSWORDS)
             self.assertIn('VARKENZA ROLEPLAY', (output / 'gamemodes/main.pwn').read_text())
             self.assertIn('varkenza-rp.com', (output / 'gamemodes/main.pwn').read_text())
+            self.assertIn('#include <rbits>', (output / 'gamemodes/main.pwn').read_text())
             self.assertNotIn('hardcoded-legacy-secret', (output / 'gamemodes/modules/Server/GameModeInit.pwn').read_text())
             config = json.loads((output / 'pawn.json').read_text())
             self.assertEqual(config['runtime']['version'], '0.3.DL')

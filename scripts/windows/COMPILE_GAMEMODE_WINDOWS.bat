@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
-cd /d "%~dp0"
-echo [VARKENZA] Pawn build helper v0.11
+cd /d "%~dp0..\.."
+echo [VARKENZA] Standalone Pawn prototype (NOT open.RP)
 if not defined OPENMP_SERVER_DIR (
     set /p "OPENMP_SERVER_DIR=Path to your extracted open.mp Server folder: "
 )
@@ -36,6 +36,6 @@ if not exist "%BUILD_AMX%" (
 move /Y "%BUILD_AMX%" "%OPENMP_SERVER_DIR%\gamemodes\varkenza.amx" >NUL
 if errorlevel 1 (echo [ERROR] Cannot move the compiled AMX. & exit /b 1)
 echo [OK] Compiled game file: "%OPENMP_SERVER_DIR%\gamemodes\varkenza.amx"
-echo [IMPORTANT] Configure matching secrets in web\.env and game\gamemodes\varkenza.pwn.
+echo [IMPORTANT] Standalone prototype only. For the open.RP baseline use tools\BUILD_OPENRP_WINDOWS.bat.
 pause
 endlocal

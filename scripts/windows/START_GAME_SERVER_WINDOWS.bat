@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
-cd /d "%~dp0"
-echo [VARKENZA] open.mp development server v0.11
+cd /d "%~dp0..\.."
+echo [VARKENZA] open.mp standalone prototype
 if not defined OPENMP_SERVER_DIR (
     set /p "OPENMP_SERVER_DIR=Path to the extracted open.mp Windows Server folder: "
 )
@@ -11,7 +11,7 @@ if not exist "%OPENMP_SERVER_DIR%\omp-server.exe" (
     exit /b 1
 )
 if not exist "%OPENMP_SERVER_DIR%\gamemodes\varkenza.amx" (
-    echo [ERROR] Compile first using COMPILE_GAMEMODE_WINDOWS.bat
+    echo [ERROR] Compile first using scripts\windows\COMPILE_GAMEMODE_WINDOWS.bat
     pause
     exit /b 1
 )

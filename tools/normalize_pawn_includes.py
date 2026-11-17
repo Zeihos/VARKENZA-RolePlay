@@ -9,7 +9,7 @@ third-party angle-bracket includes and all other code remain untouched.
 from pathlib import Path
 import re
 
-INCLUDE = re.compile(r'(?m)^([ \t]*#[ \t]*include[ \t]+)"([^"\r\n]+)"')
+INCLUDE = re.compile(rb'(?m)^([ \t]*#[ \t]*include[ \t]+)"([^"\r\n]+)"')
 
 
 def normalize_pawn_includes(runtime):
@@ -34,12 +34,14 @@ def normalize_pawn_includes(runtime):
     fixes = 0
     for root in roots:
         base = runtime / root
-        for source in list(base.rglob("*.pwn")) + list(base.rglob("*.inc")):
-            original = source.read_text(encoding="utf-8-sig", errors="replace")
-            relative_parent = source.parent.relative_to(base)
+        for source in (f for f in base.rglob("*") if f.is_file() and f.suffix.lower() in (".pwn", ".inc")):
+            original = source.read_bytes()
             def rewrite(match):
                 nonlocal fixes
-                original_path = match.group(2)
+                try:
+                    original_path = match.group(2).decode("ascii")
+                except UnicodeDecodeError:
+                    return match.group(0)
                 name = original_path.replace("\\", "/")
                 for folder in (root, "gamemodes", "legacy", "filterscripts"):
                     if folder not in catalogs:
@@ -50,12 +52,12 @@ def normalize_pawn_includes(runtime):
                         # Prefer the include as seen from the project's include roots.
                         if found != original_path:
                             fixes += 1
-                        return match.group(1) + '"' + found + '"'
+                        return match.group(1) + b'"' + found.encode("ascii") + b'"'
                 # Could be an external/generated include; do not guess its location.
                 return match.group(0)
             updated = INCLUDE.sub(rewrite, original)
             if updated != original:
-                source.write_text(updated, encoding="utf-8")
+                source.write_bytes(updated)
     return fixes
 
 

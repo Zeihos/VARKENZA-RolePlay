@@ -1,0 +1,64 @@
+import json
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from prepare_openrp import prepare, required_env
+
+PASSWORDS = {
+    'VARKENZA_MYSQL_PASSWORD': 'example-test-mysql-secret-only',
+    'VARKENZA_RCON_PASSWORD': 'example-test-rcon-secret-only',
+}
+
+
+class PreparationTests(unittest.TestCase):
+    def fixture(self, root):
+        source = Path(root) / 'upstream'
+        for directory in ('gamemodes/modules/Server', 'filterscripts', 'legacy', 'Maps', 'models', 'plugins', 'scriptfiles'):
+            (source / directory).mkdir(parents=True, exist_ok=True)
+        (source / 'LICENSE').write_text('MIT License\n')
+        (source / 'open_rp.sql').write_text('-- test database\n')
+        (source / 'mysql.ini').write_text('password = 0000\n')
+        (source / 'server.cfg').write_text('rcon_password 0000\n')
+        (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n')
+        (source / 'gamemodes/modules/Server/GameModeInit.pwn').write_text('SendRconCommand("password hardcoded-legacy-secret"); // lock\n')
+        (source / 'pawn.json').write_text(json.dumps({
+            'entry': 'gamemodes/main.pwn',
+            'runtime': {'version': '0.3.DL', 'rcon_password': '0000'},
+            'runtimes': [{'name': 'dev', 'rcon_password': '0000'}]
+        }))
+        return source
+
+    def test_branded_staging_removes_unsafe_defaults(self):
+        with tempfile.TemporaryDirectory() as root:
+            src = self.fixture(root)
+            output = Path(root) / 'runtime'
+            prepare(src, output, PASSWORDS)
+            self.assertIn('VARKENZA ROLEPLAY', (output / 'gamemodes/main.pwn').read_text())
+            self.assertIn('varkenza-rp.com', (output / 'gamemodes/main.pwn').read_text())
+            self.assertNotIn('hardcoded-legacy-secret', (output / 'gamemodes/modules/Server/GameModeInit.pwn').read_text())
+            config = json.loads((output / 'pawn.json').read_text())
+            self.assertEqual(config['runtime']['version'], '0.3.DL')
+            self.assertEqual(config['runtime']['rcon_password'], PASSWORDS['VARKENZA_RCON_PASSWORD'])
+            self.assertIn(PASSWORDS['VARKENZA_MYSQL_PASSWORD'], (output / 'mysql.ini').read_text())
+            self.assertFalse((output / 'server.cfg').exists())
+            self.assertEqual((src / 'gamemodes/main.pwn').read_text().splitlines()[0], '#define SERVER_NAME "open.RP"')
+            with self.assertRaises(ValueError):
+                prepare(src, output, PASSWORDS)
+            prepare(src, output, PASSWORDS, replace=True)
+
+    def test_reject_unsafe_credentials_and_destinations(self):
+        with self.assertRaises(ValueError):
+            required_env({'VARKENZA_MYSQL_PASSWORD': '0000', 'VARKENZA_RCON_PASSWORD': '1234567890123456'})
+        with self.assertRaises(ValueError):
+            required_env({'VARKENZA_MYSQL_PASSWORD': 'some-secret', 'VARKENZA_RCON_PASSWORD': 'short'})
+        with tempfile.TemporaryDirectory() as root:
+            src = self.fixture(root)
+            with self.assertRaises(ValueError):
+                prepare(src, src / 'runtime', PASSWORDS)
+
+
+if __name__ == '__main__':
+    unittest.main()

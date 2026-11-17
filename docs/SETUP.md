@@ -38,7 +38,9 @@ Copy-Item .env.example .env
 node -e "console.log(require('node:crypto').randomBytes(36).toString('base64url'))"
 ```
 
-Не отправляйте этот файл в GitHub. Затем запустите:
+Не отправляйте этот файл в GitHub. **Шаблон `PLAYER_SESSION_SECRET` автоматически отклоняется**: пока не установлен случайный секрет, веб-прототип применяет временный секрет для текущего процесса, поэтому сессии не переживут перезапуск.
+
+На Windows можно использовать `scripts/windows/START_WEBSITE_WINDOWS.bat`: он читает `web/.env` и не запускается без него. Затем запустите вручную:
 
 ```powershell
 node --env-file=.env server.js
@@ -72,7 +74,7 @@ python tools/prepare_openrp.py
 Из корня проекта:
 
 ```bash
-node --test web/tests/banking-core.test.js
+npm --prefix web test
 python -m unittest discover -s tools/tests -v
 ```
 

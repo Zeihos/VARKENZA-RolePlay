@@ -66,6 +66,16 @@ def patch_sources(destination, settings):
     data = json.loads(manifest.read_text(encoding='utf-8-sig'))
     if data.get('entry') != 'gamemodes/main.pwn' or data.get('runtime', {}).get('version') != '0.3.DL':
         raise ValueError('Unsupported upstream manifest. Check runtime and Pawn entry before updating.')
+    # Original upstream references a plugin with no downloadable release.
+    # Use the published x86 Linux/Windows MapAndreas assets, pinned by tag.
+    dependencies = data.get('dependencies', [])
+    old_mapandreas = 'Southclaws/samp-plugin-mapandreas'
+    if old_mapandreas not in dependencies:
+        raise ValueError('Upstream MapAndreas dependency changed; review the migration')
+    data['dependencies'] = [
+        'philip1337/samp-plugin-mapandreas:v1.2.1' if value == old_mapandreas else value
+        for value in dependencies
+    ]
     data['user'], data['repo'] = 'Zeihos', 'VARKENZA-RolePlay'
     runtime = data['runtime']
     runtime['hostname'] = 'VARKENZA ROLEPLAY | Development'

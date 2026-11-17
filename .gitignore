@@ -1,0 +1,17 @@
+# Local-only secrets and generated data
+web/.env
+**/varkenza-bridge.cfg
+web/data/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.db-wal
+*.db-shm
+*.log
+*.pyc
+**/__pycache__/
+*.amx
+*.tmp
+node_modules/
+.env

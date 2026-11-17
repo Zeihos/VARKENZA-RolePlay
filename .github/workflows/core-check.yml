@@ -1,14 +1,47 @@
-name: Core checks
+name: Source and repository checks
 on:
   push:
   pull_request:
+permissions:
+  contents: read
 jobs:
-  banking:
+  source-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run bank logic tests
-        run: node --test web/tests/banking-core.test.js
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test banking and validate web JavaScript
+        shell: bash
+        run: |
+          node --test web/tests/banking-core.test.js
+          node --check web/server.js
+          for file in web/lib/*.js web/public/js/*.js web/scripts/*.js; do
+            node --check "$file"
+          done
+      - name: Check Python applications and helper
+        run: python -m py_compile tools/prepare_openrp.py apps/admin-software/*.py apps/launcher/*.py
+      - name: Enforce clean repository structure
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          required = [
+            'game/gamemodes/varkenza.pwn', 'game/config.example.json',
+            'web/package.json', 'web/server.js', 'web/.env.example',
+            'apps/admin-software/admin_console.py', 'apps/launcher/launcher.py',
+            'scripts/windows/START_WEBSITE_WINDOWS.bat', 'assets/branding/logo.png',
+            '.gitmodules', 'OPENRP_LICENSE',
+          ]
+          for path in required:
+            assert Path(path).is_file(), f'Missing source: {path}'
+          tracked = subprocess.check_output(['git', 'ls-files'], text=True).splitlines()
+          forbidden = [p for p in tracked if p.startswith('web/data/') or p.endswith(('.sqlite3', '.sqlite3-shm', '.sqlite3-wal', '.pyc'))]
+          assert not forbidden, f'Generated files tracked: {forbidden}'
+          assert not any(p.startswith('Файлы/') or p.startswith('Оформление/') for p in tracked), 'Old directories still tracked'
+          print('Clean source structure verified.')
+          PY

@@ -1,0 +1,34 @@
+name: open.RP integration checks
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test staging rules
+        run: python -m unittest discover -s tools/tests -v
+      - name: Stage pinned open.RP source (no compilation)
+        env:
+          VARKENZA_MYSQL_PASSWORD: integration-test-mysql-secret-only
+          VARKENZA_RCON_PASSWORD: integration-test-rcon-secret-only
+        run: |
+          python tools/prepare_openrp.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("build/openrp")
+          assert (p / "LICENSE").exists()
+          assert (p / "mysql.ini").exists()
+          assert not (p / "server.cfg").exists()
+          assert json.loads((p / "pawn.json").read_text())["runtime"]["version"] == "0.3.DL"
+          assert "VARKENZA ROLEPLAY" in (p / "gamemodes/main.pwn").read_text()
+          print("Staging validated; Pawn compilation and in-game tests still required.")
+          PY

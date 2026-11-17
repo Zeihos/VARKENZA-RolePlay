@@ -24,7 +24,7 @@ class PreparationTests(unittest.TestCase):
         (source / 'server.cfg').write_text('rcon_password 0000\n')
         (source / 'libmariadb.dll').write_bytes(b'fixture-library')
         (source / 'log-core.dll').write_bytes(b'fixture-logging')
-        (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n#include <rBits>\n')
+        (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n#include <rBits> // legacy\n')
         (source / 'gamemodes/modules/Server/GameModeInit.pwn').write_text('SendRconCommand("password hardcoded-legacy-secret"); // lock\n')
         (source / 'pawn.json').write_text(json.dumps({
             'entry': 'gamemodes/main.pwn',

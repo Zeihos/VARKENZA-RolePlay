@@ -26,6 +26,8 @@ python ..\..\tools\ensure_mapandreas.py --runtime .
 if errorlevel 1 (popd & exit /b 1)
 python ..\..\tools\ensure_mysql_include.py --runtime .
 if errorlevel 1 (popd & exit /b 1)
+python ..\..\tools\patch_pawn_linkage.py --runtime .
+if errorlevel 1 (popd & exit /b 1)
 sampctl build dev
 if errorlevel 1 (popd & exit /b 1)
 popd

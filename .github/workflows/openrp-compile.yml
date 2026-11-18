@@ -102,8 +102,11 @@ jobs:
               printf '%s: ' "$symbol"
               grep -c "$symbol" "$listing" || true
             done
-            echo "=== Compiled module markers ==="
-            grep -nE '^#file .*House[.]pwn|^#file .*HouseStorage[.]pwn|^#file .*Vehicles_Core[.]pwn|^#file .*player_crashes[.]pwn|^#file .*BizzFurniture[.]pwn|^#file .*Factions[.]pwn' "$listing" | head -60 || true
+            echo "=== Module names in actual preprocessor result ==="
+            for name in House.pwn HouseStorage.pwn Furniture.pwn RobStorage.pwn Vehicles_Core.pwn player_crashes.pwn BizzFurniture.pwn Factions.pwn; do
+              echo "-- $name --"
+              grep -Fn "$name" "$listing" | head -3 || true
+            done
             echo "=== Expanded code tail ==="
             tail -n 35 "$listing"
           fi

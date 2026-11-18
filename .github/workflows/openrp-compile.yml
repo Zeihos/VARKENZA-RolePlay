@@ -95,7 +95,15 @@ jobs:
           find gamemodes -name '*.lst' -type f -printf '%p %s bytes\n' | head -15
           listing="$(find gamemodes -name '*.lst' -type f -print -quit)"
           if [ -n "$listing" ]; then
-            grep -nE 'Player_SafeSpawned|Vehicle_Exists|House_Exists|Storage_DeleteHouseRacks|SendRadioMessage' "$listing" | head -50 || true
+            echo "=== Function definitions present in expanded game ==="
+            grep -nE '^[[:space:]]*(public[[:space:]]+|stock[[:space:]]+)?(bool:[[:space:]]*)?(Player_SafeSpawned|Vehicle_Exists|House_Exists|Storage_DeleteHouseRacks|Storage_PlayerNearRack|SendRadioMessage|RotateBizzFurDoor)[[:space:]]*\(' "$listing" | head -60 || true
+            echo "=== Function prototype occurrence counts ==="
+            for symbol in Player_SafeSpawned Vehicle_Exists House_Exists Storage_DeleteHouseRacks SendRadioMessage; do
+              printf '%s: ' "$symbol"
+              grep -c "$symbol" "$listing" || true
+            done
+            echo "=== Expanded code tail ==="
+            tail -n 35 "$listing"
           fi
       - name: Upload compiled Pawn bytecode
         if: success()

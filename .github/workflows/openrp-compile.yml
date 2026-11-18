@@ -102,13 +102,8 @@ jobs:
               printf '%s: ' "$symbol"
               grep -c "$symbol" "$listing" || true
             done
-            echo "=== Actual compiled source inclusion markers ==="
-            grep -nE '^#file ".*/(House|HouseStorage|Vehicles_Core|player_crashes|BizzFurniture|Factions)\\.pwn"' "$listing" | head -45 || true
-            echo "=== Source marker counts ==="
-            for name in House.pwn HouseStorage.pwn Vehicles_Core.pwn player_crashes.pwn BizzFurniture.pwn Factions.pwn; do
-              printf '%s: ' "$name"
-              grep -Fc "/$name\"' "$listing" || true
-            done
+            echo "=== Compiled module markers ==="
+            grep -nE '^#file .*House[.]pwn|^#file .*HouseStorage[.]pwn|^#file .*Vehicles_Core[.]pwn|^#file .*player_crashes[.]pwn|^#file .*BizzFurniture[.]pwn|^#file .*Factions[.]pwn' "$listing" | head -60 || true
             echo "=== Expanded code tail ==="
             tail -n 35 "$listing"
           fi

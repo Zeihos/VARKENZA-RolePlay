@@ -69,11 +69,11 @@ def patch_linkage(runtime):
         before = path.read_bytes()
         result = before
         for old, new in replacements:
-            if result.count(old) == 1:
-                result = result.replace(old, new, 1)
-            elif result.count(new) == 1:
+            if result.count(new) == 1:
                 # Re-running a staged build must not mutate files twice.
                 continue
+            elif result.count(old) == 1:
+                result = result.replace(old, new, 1)
             else:
                 raise ValueError(f"Unrecognized upstream signature in {name}: {old[:70]!r}")
         if result != before:

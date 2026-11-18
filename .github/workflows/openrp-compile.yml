@@ -102,6 +102,17 @@ jobs:
               printf '%s: ' "$symbol"
               grep -c "$symbol" "$listing" || true
             done
+            echo "=== Module inclusion markers and expanded definitions ==="
+            python - <<'PY'
+            from pathlib import Path
+            source = Path("gamemodes/main.lst").read_text(encoding="utf-8", errors="replace").splitlines()
+            wanted = ["House.inc", "House.pwn", "HouseStorage.pwn", "Vehicles_Core.pwn", "player_crashes.pwn", "BizzFurniture.pwn", "Factions.pwn"]
+            for name in wanted:
+                locations = [i for i, line in enumerate(source) if line.startswith('#file "') and line.endswith('/' + name + '"')]
+                print(name, 'count=', len(locations))
+                for i in locations[:1]:
+                    print("\\n".join(source[i:i + 12]))
+            PY
             echo "=== Expanded code tail ==="
             tail -n 35 "$listing"
           fi

@@ -62,9 +62,41 @@ jobs:
           python ../../tools/ensure_mapandreas.py --runtime .
           python ../../tools/ensure_mysql_include.py --runtime .
           python ../../tools/patch_pawn_linkage.py --runtime .
+          echo "=== Confirm staged definitions ==="
+          grep -n '^public bool:Player_SafeSpawned' gamemodes/modules/Player/SaveLoad/player_crashes.pwn
+          grep -n '^public bool: House_Exists' gamemodes/modules/Systems/House/House.pwn
+          grep -n '^public bool: Vehicle_Exists' gamemodes/modules/Systems/Vehicles/Vehicles_Core.pwn
+          sed -n '1,7p' gamemodes/modules/Systems/House/House.inc
           sampctl build dev --dryRun
           timeout 300 sampctl build dev
           test -s gamemodes/main.amx
+      - name: Examine Pawn preprocessor output on failure
+        if: failure()
+        env:
+          SAMPCTL_GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -u
+          python - <<'PY'
+          import copy, json
+          from pathlib import Path
+          manifest = Path('build/openrp/pawn.json')
+          data = json.loads(manifest.read_text())
+          dev = next(b for b in data['builds'] if b['name'] == 'dev')
+          listing = copy.deepcopy(dev)
+          listing['name'] = 'diagnostic-listing'
+          listing['args'] = [a for a in dev['args'] if a != '-l'] + ['-l']
+          data['builds'].append(listing)
+          manifest.write_text(json.dumps(data, indent=2))
+          PY
+          cd build/openrp
+          sampctl build diagnostic-listing || true
+          echo "=== Preprocessor listing files ==="
+          find gamemodes -name '*.lst' -type f -printf '%p %s bytes\n' | head -15
+          listing="$(find gamemodes -name '*.lst' -type f -print -quit)"
+          if [ -n "$listing" ]; then
+            grep -nE 'Player_SafeSpawned|Vehicle_Exists|House_Exists|Storage_DeleteHouseRacks|SendRadioMessage' "$listing" | head -50 || true
+          fi
       - name: Upload compiled Pawn bytecode
         if: success()
         uses: actions/upload-artifact@v4

@@ -6,6 +6,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from prepare_openrp import prepare, required_env
+from patch_pawn_linkage import PAIRS
 
 PASSWORDS = {
     'VARKENZA_MYSQL_PASSWORD': 'example-test-mysql-secret-only',
@@ -26,6 +27,11 @@ class PreparationTests(unittest.TestCase):
         (source / 'log-core.dll').write_bytes(b'fixture-logging')
         (source / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "open.RP"\n#define WEB_URL "https://open.mp/"\n#include <rBits> // legacy\n')
         (source / 'gamemodes/modules/Server/GameModeInit.pwn').write_text('SendRconCommand("password hardcoded-legacy-secret"); // lock\n')
+        # Reproduce the actual pinned upstream declarations for fail-closed patch tests.
+        for relative, replacements in PAIRS.items():
+            target = source / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(b"\n".join(old for old, new in replacements) + b"\n")
         (source / 'pawn.json').write_text(json.dumps({
             'entry': 'gamemodes/main.pwn',
             'dependencies': ['pawn-lang/samp-stdlib', 'Southclaws/samp-plugin-mapandreas'],
@@ -42,7 +48,11 @@ class PreparationTests(unittest.TestCase):
             self.assertIn('VARKENZA ROLEPLAY', (output / 'gamemodes/main.pwn').read_text())
             self.assertIn('varkenza-rp.com', (output / 'gamemodes/main.pwn').read_text())
             self.assertIn('#include <rbits>', (output / 'gamemodes/main.pwn').read_text())
-            self.assertNotIn('hardcoded-legacy-secret', (output / 'gamemodes/modules/Server/GameModeInit.pwn').read_text())
+            staged_server = output / 'gamemodes/modules/Server'
+            staged_init = list(staged_server.glob('vkmod_*_GameModeInit.pwn'))
+            self.assertEqual(len(staged_init), 1)
+            self.assertNotIn('hardcoded-legacy-secret', staged_init[0].read_text())
+            self.assertFalse((staged_server / 'GameModeInit.pwn').exists())
             config = json.loads((output / 'pawn.json').read_text())
             self.assertEqual(config['runtime']['version'], '0.3.DL')
             self.assertIn('philip1337/samp-plugin-mapandreas:v1.2.1', config['dependencies'])

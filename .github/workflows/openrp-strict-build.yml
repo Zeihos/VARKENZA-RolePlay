@@ -1,6 +1,13 @@
 name: Strict open.RP Pawn compilation
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "tools/**"
+      - "upstream/**"
+      - ".gitmodules"
+      - ".github/workflows/openrp-strict-build.yml"
   pull_request:
     paths:
       - "tools/**"

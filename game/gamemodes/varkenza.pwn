@@ -609,20 +609,22 @@ stock VarkenzaField(const data[], field, out[], size) {
     out[0] = 0;
     return 0;
 }
-stock VarkenzaLostSession(playerid) {
+// Release all temporary privileges and resources when staff authorization ends.
+stock VarkenzaRevokeStaff(playerid) {
+    PlayerStaff[playerid] = false;
     if (PlayerSpectating[playerid]) VarkenzaStopSpectating(playerid);
-    // A revoked staff session must not leave a privileged temporary vehicle
-    // in the world. Clear both IDs before calling DestroyVehicle so a later
-    // callback or reuse of the vehicle slot cannot see stale ownership.
-    new staffVehicle = PlayerStaffVehicle[playerid];
+    new vehicleid = PlayerStaffVehicle[playerid];
     PlayerStaffVehicle[playerid] = INVALID_VEHICLE_ID;
-    if (staffVehicle != INVALID_VEHICLE_ID) DestroyVehicle(staffVehicle);
+    if (vehicleid != INVALID_VEHICLE_ID) DestroyVehicle(vehicleid);
+    return 1;
+}
+stock VarkenzaLostSession(playerid) {
+    VarkenzaRevokeStaff(playerid);
     new garageVehicle = PlayerGarageVehicle[playerid];
     PlayerGarageVehicle[playerid] = INVALID_VEHICLE_ID;
     if (garageVehicle != INVALID_VEHICLE_ID) DestroyVehicle(garageVehicle);
     PlayerCarEngine[playerid] = false;
     PlayerLinked[playerid] = false;
-    PlayerStaff[playerid] = false;
     PlayerSID[playerid][0] = 0;
     PlayerPendingIndex[playerid] = -1;
     PlayerAction[playerid] = VK_ACTION_NONE;
@@ -750,10 +752,7 @@ public VarkenzaPingReply(index, response_code, data[]) {
     GivePlayerMoney(playerid, PlayerCash[playerid]);
     new commandId[20], commandType[16], commandText[100];
     VarkenzaField(data, 3, commandId, sizeof(commandId));
-    if (!strcmp(commandId, "STAFF_OFF")) {
-        PlayerStaff[playerid] = false;
-        if (PlayerSpectating[playerid]) VarkenzaStopSpectating(playerid);
-    }
+    if (!strcmp(commandId, "STAFF_OFF")) VarkenzaRevokeStaff(playerid);
     if (!strcmp(commandId, "STAFF_ON")) PlayerStaff[playerid] = true;
     if (strlen(commandId) == 16) {
         VarkenzaField(data, 4, commandType, sizeof(commandType));
@@ -1091,7 +1090,12 @@ public VarkenzaStaffLinkReply(index, response_code, data[]) {
 public VarkenzaStaffOffReply(index, response_code, data[]) {
     new playerid = VarkenzaValidReply(index, VK_ACTION_STAFF_OFF);
     if (playerid < 0) return 1;
-    PlayerStaff[playerid] = false;
+    if (response_code == 401 || response_code == 403) {
+        VarkenzaRevokeStaff(playerid);
+        return SendClientMessage(playerid, VK_RED, "Staff authorization expired.");
+    }
+    if (response_code != 200) return SendClientMessage(playerid, VK_RED, "Could not disable staff session. Try again.");
+    VarkenzaRevokeStaff(playerid);
     SendClientMessage(playerid, VK_GREY, "Staff session disabled.");
     return 1;
 }
@@ -1099,7 +1103,7 @@ public VarkenzaStaffCommandReply(index, response_code, data[]) {
     new playerid = VarkenzaValidReply(index, VK_ACTION_STAFF_COMMAND);
     if (playerid < 0) return 1;
     if (response_code != 200) {
-        if (response_code == 401 || response_code == 403) PlayerStaff[playerid] = false;
+        if (response_code == 401 || response_code == 403) VarkenzaRevokeStaff(playerid);
         return SendClientMessage(playerid, VK_RED, "Staff action denied by server or target disconnected.");
     }
     new type = PlayerStaffCommand[playerid];

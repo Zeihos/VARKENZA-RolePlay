@@ -63,7 +63,9 @@ def namespace_pawn_modules(runtime):
             if name.startswith('modules/'):
                 new_ref = target
             else:
-                new_ref = target.split('/')[-1]
+                prefix = name.rsplit('/', 1)[0] if '/' in name else ''
+                new_leaf = target.rsplit('/', 1)[-1]
+                new_ref = f'{prefix}/{new_leaf}' if prefix else new_leaf
             return match.group(1) + b'"' + new_ref.encode('ascii') + b'"'
 
         amended = LOCAL_INCLUDE.sub(rewrite, original)

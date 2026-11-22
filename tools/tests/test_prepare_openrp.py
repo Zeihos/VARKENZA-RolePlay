@@ -42,7 +42,11 @@ class PreparationTests(unittest.TestCase):
             self.assertIn('VARKENZA ROLEPLAY', (output / 'gamemodes/main.pwn').read_text())
             self.assertIn('varkenza-rp.com', (output / 'gamemodes/main.pwn').read_text())
             self.assertIn('#include <rbits>', (output / 'gamemodes/main.pwn').read_text())
-            self.assertNotIn('hardcoded-legacy-secret', (output / 'gamemodes/modules/Server/GameModeInit.pwn').read_text())
+            staged_server = output / 'gamemodes/modules/Server'
+            staged_init = list(staged_server.glob('vkmod_*_GameModeInit.pwn'))
+            self.assertEqual(len(staged_init), 1)
+            self.assertNotIn('hardcoded-legacy-secret', staged_init[0].read_text())
+            self.assertFalse((staged_server / 'GameModeInit.pwn').exists())
             config = json.loads((output / 'pawn.json').read_text())
             self.assertEqual(config['runtime']['version'], '0.3.DL')
             self.assertIn('philip1337/samp-plugin-mapandreas:v1.2.1', config['dependencies'])

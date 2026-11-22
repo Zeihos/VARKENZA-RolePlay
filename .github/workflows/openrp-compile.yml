@@ -1,0 +1,122 @@
+name: VARKENZA Pawn build
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/**"
+      - "upstream/**"
+      - ".gitmodules"
+      - ".github/workflows/openrp-compile.yml"
+  pull_request:
+    paths:
+      - "tools/**"
+      - "upstream/**"
+      - ".gitmodules"
+      - ".github/workflows/openrp-compile.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate staging
+        run: python -m unittest discover -s tools/tests -v
+      - name: Install verified sampctl 1.16.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://github.com/Southclaws/sampctl/releases/download/1.16.0/sampctl_1.16.0_linux_amd64.tar.gz \
+            --output "$RUNNER_TEMP/sampctl.tar.gz"
+          echo "7a39a208a633ac1a73a17af1764845fdfe7aa348e056ea25e23e9d1b61e70718  $RUNNER_TEMP/sampctl.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/sampctl-bin" "$HOME/.local/bin"
+          tar -xf "$RUNNER_TEMP/sampctl.tar.gz" -C "$RUNNER_TEMP/sampctl-bin"
+          binary="$(find "$RUNNER_TEMP/sampctl-bin" -type f -name sampctl -print -quit)"
+          test -n "$binary"
+          install -m 0755 "$binary" "$HOME/.local/bin/sampctl"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Stage private legacy game source
+        env:
+          VARKENZA_MYSQL_PASSWORD: ci-local-mysql-placeholder-only
+          VARKENZA_RCON_PASSWORD: ci-local-rcon-placeholder-only
+        run: python tools/prepare_openrp.py
+      - name: Compile legacy Pawn gamemode
+        id: pawn
+        env:
+          SAMPCTL_GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd build/openrp
+          sampctl version
+          timeout 600 sampctl ensure --platform linux
+          python ../../tools/ensure_mapandreas.py --runtime .
+          python ../../tools/ensure_mysql_include.py --runtime .
+          echo "=== Namespaced Pawn module count ==="
+          find gamemodes/modules -name 'vkmod_*.pwn' | wc -l
+          echo "=== Colliding upstream names now point to distinct includes ==="
+          sed -n '1,9p' gamemodes/modules/Systems/House/House.inc
+          sampctl build dev --dryRun
+          timeout 300 sampctl build dev
+          test -s gamemodes/main.amx
+      - name: Examine Pawn preprocessor output on failure
+        if: failure()
+        env:
+          SAMPCTL_GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -u
+          python - <<'PY'
+          import copy, json
+          from pathlib import Path
+          manifest = Path('build/openrp/pawn.json')
+          data = json.loads(manifest.read_text())
+          dev = next(b for b in data['builds'] if b['name'] == 'dev')
+          listing = copy.deepcopy(dev)
+          listing['name'] = 'diagnostic-listing'
+          listing['args'] = [a for a in dev['args'] if a != '-l'] + ['-l']
+          data['builds'].append(listing)
+          manifest.write_text(json.dumps(data, indent=2))
+          PY
+          cd build/openrp
+          sampctl build diagnostic-listing || true
+          listing="$(find gamemodes -name '*.lst' -type f -print -quit)"
+          if [ -n "$listing" ]; then
+            echo "=== Actual definitions in preprocessed game ==="
+            grep -nE 'Player_SafeSpawned\(|Vehicle_Exists\(|House_Exists\(|Storage_DeleteHouseRacks\(' "$listing" | tail -30 || true
+            echo "=== Bytecode listing size ==="
+            wc -c "$listing"
+          fi
+      - name: Upload compiled Pawn bytecode
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VARKENZA-openRP-Pawn-amx
+          path: build/openrp/gamemodes/main.amx
+          retention-days: 7
+          if-no-files-found: error
+      - name: Report compile status
+        if: always()
+        shell: bash
+        env:
+          RESULT: ${{ steps.pawn.outcome }}
+        run: |
+          {
+            echo "## Legacy open.RP compilation"
+            if [ "$RESULT" = success ]; then
+              echo "Pawn bytecode compiled successfully in CI."
+            else
+              echo "Compiler/dependency step did not pass; review the 'Compile legacy Pawn gamemode' logs."
+            fi
+            echo ""
+            echo "Not an open.mp server integration or gameplay test."
+          } >> "$GITHUB_STEP_SUMMARY"

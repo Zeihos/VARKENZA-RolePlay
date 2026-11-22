@@ -60,6 +60,34 @@ class PreparationTests(unittest.TestCase):
                 prepare(src, output, PASSWORDS)
             prepare(src, output, PASSWORDS, replace=True)
 
+    def test_failed_replacement_preserves_previous_runtime(self):
+        with tempfile.TemporaryDirectory() as root:
+            src = self.fixture(root)
+            output = Path(root) / 'runtime'
+            prepare(src, output, PASSWORDS)
+            old_main = (output / 'gamemodes/main.pwn').read_bytes()
+            old_mysql = (output / 'mysql.ini').read_bytes()
+            old_manifest = (output / 'pawn.json').read_bytes()
+            # An upstream change that fails branding should not delete the
+            # last working runtime, nor expose a half-written destination.
+            (src / 'gamemodes/main.pwn').write_text('#define SERVER_NAME "unknown"\\n')
+            with self.assertRaises(ValueError):
+                prepare(src, output, PASSWORDS, replace=True)
+            self.assertEqual((output / 'gamemodes/main.pwn').read_bytes(), old_main)
+            self.assertEqual((output / 'mysql.ini').read_bytes(), old_mysql)
+            self.assertEqual((output / 'pawn.json').read_bytes(), old_manifest)
+            self.assertEqual(list(Path(root).glob('.varkenza-stage-*')), [])
+
+    def test_failed_first_staging_leaves_no_runtime(self):
+        with tempfile.TemporaryDirectory() as root:
+            src = self.fixture(root)
+            output = Path(root) / 'runtime'
+            (src / 'gamemodes/main.pwn').write_text('invalid upstream file\\n')
+            with self.assertRaises(ValueError):
+                prepare(src, output, PASSWORDS)
+            self.assertFalse(output.exists())
+            self.assertEqual(list(Path(root).glob('.varkenza-stage-*')), [])
+
     def test_reject_unsafe_credentials_and_destinations(self):
         with self.assertRaises(ValueError):
             required_env({'VARKENZA_MYSQL_PASSWORD': '0000', 'VARKENZA_RCON_PASSWORD': '1234567890123456'})

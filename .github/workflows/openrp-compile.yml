@@ -93,6 +93,16 @@ jobs:
           if [ -n "$listing" ]; then
             echo "=== Actual definitions in preprocessed game ==="
             grep -nE 'Player_SafeSpawned\(|Vehicle_Exists\(|House_Exists\(|Storage_DeleteHouseRacks\(' "$listing" | tail -30 || true
+            echo "=== Referenced vs included module names ==="
+            for module in player_crashes Vehicles_Core House HouseStorage Factions BizzFurniture Garages; do
+              echo "-- $module --"
+              grep -Fn "_$module.pwn" "$listing" | head -3 || true
+            done
+            echo "=== Function implementation markers ==="
+            for symbol in Player_SafeSpawned Vehicle_Exists House_Exists SendPoliceMessage IsACop Player_InfrontGarage; do
+              echo "-- $symbol --"
+              grep -nE "^[[:space:]]*(public[[:space:]]+|stock[[:space:]]+)?(bool:[[:space:]]*)?$symbol[[:space:]]*[(]" "$listing" | head -4 || true
+            done
             echo "=== Bytecode listing size ==="
             wc -c "$listing"
           fi

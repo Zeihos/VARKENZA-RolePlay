@@ -9,10 +9,10 @@ from pawn_diagnostics import analyze_log, markdown
 class PawnDiagnosticTests(unittest.TestCase):
     def test_count_and_group_real_pawn_errors(self):
         raw = (
-            '/tmp/build/gamemodes/vkmod_GMX.pwn:42 (error 004) function "Player_SafeSpawned" is not implemented\\n'
-            '/tmp/build/gamemodes/vkmod_House.pwn:206 (error 017) undefined symbol "IsACop"\\n'
-            '/tmp/build/gamemodes/vkmod_House.pwn:743 (error 017) undefined symbol "IsACop"\\n'
-            'build failed with 26 compiler diagnostics\\n'
+            '/tmp/build/gamemodes/vkmod_GMX.pwn:42 (error 004) function "Player_SafeSpawned" is not implemented\n'
+            '/tmp/build/gamemodes/vkmod_House.pwn:206 (error 017) undefined symbol "IsACop"\n'
+            '/tmp/build/gamemodes/vkmod_House.pwn:743 (error 017) undefined symbol "IsACop"\n'
+            'build failed with 26 compiler diagnostics\n'
         )
         errors, groups = analyze_log(raw)
         self.assertEqual(len(errors), 3)

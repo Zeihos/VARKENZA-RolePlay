@@ -44,6 +44,20 @@ PAIRS = {
     G + "Systems/Factions/Factions.pwn": [
         (b"\nstock SendRadioMessage(member, color, sstring[])\n",
          b"\npublic SendRadioMessage(member, color, sstring[])\n"),
+        (b"\nstock SendPoliceMessage(color, const string[])\n",
+         b"\npublic SendPoliceMessage(color, const string[])\n"),
+        (b"\nstock IsACop(playerid)\n",
+         b"\npublic IsACop(playerid)\n"),
+    ],
+    G + "Systems/House/ExteriorFurniture.pwn": [
+        (b"\nLoadHouseExterior(houseid)\n",
+         b"\npublic LoadHouseExterior(houseid)\n"),
+    ],
+    G + "Systems/House/Garages.pwn": [
+        (b"\nPlayer_InfrontGarage(playerid)\n",
+         b"\npublic Player_InfrontGarage(playerid)\n"),
+        (b"\nstock DestroyGarageInfoTD(playerid)\n",
+         b"\npublic DestroyGarageInfoTD(playerid)\n"),
     ],
     G + "Systems/Systems_Header.inc": [
         (
@@ -51,6 +65,10 @@ PAIRS = {
             b"\n// VARKENZA: used before the Factions/Bizz module definitions.\n"
             b"forward SendRadioMessage(member, color, sstring[]);\n"
             b"forward RotateBizzFurDoor(biznisid, playerid);\n"
+            b"forward IsACop(playerid);\n"
+            b"forward SendPoliceMessage(color, const string[]);\n"
+            b"forward LoadHouseExterior(houseid);\n"
+            b"forward DestroyGarageInfoTD(playerid);\n"
             b"\n// Faction - Law Duty\n",
         ),
     ],

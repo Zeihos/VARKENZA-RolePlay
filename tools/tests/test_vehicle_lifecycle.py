@@ -27,6 +27,21 @@ class VehicleLifecycleTests(unittest.TestCase):
         )
         self.assertIn("if (!IsPlayerConnected(i)) continue;", handler)
 
+    def test_revoked_staff_session_destroys_temporary_vehicle(self):
+        source = GAME.read_text(encoding="utf-8")
+        lost = source.split("stock VarkenzaLostSession(playerid) {", 1)[1]
+        lost = lost.split("\npublic VarkenzaLinkReply(", 1)[0]
+        self.assertIn("new staffVehicle = PlayerStaffVehicle[playerid];", lost)
+        self.assertIn("PlayerStaffVehicle[playerid] = INVALID_VEHICLE_ID;", lost)
+        self.assertIn("DestroyVehicle(staffVehicle);", lost)
+        self.assertIn("new garageVehicle = PlayerGarageVehicle[playerid];", lost)
+        self.assertIn("PlayerGarageVehicle[playerid] = INVALID_VEHICLE_ID;", lost)
+        self.assertIn("DestroyVehicle(garageVehicle);", lost)
+        self.assertLess(lost.index("PlayerStaffVehicle[playerid] = INVALID_VEHICLE_ID;"),
+                        lost.index("DestroyVehicle(staffVehicle);"))
+        self.assertLess(lost.index("PlayerGarageVehicle[playerid] = INVALID_VEHICLE_ID;"),
+                        lost.index("DestroyVehicle(garageVehicle);"))
+
     def test_disconnect_and_staff_delete_reset_the_vehicle_reference(self):
         source = GAME.read_text(encoding="utf-8")
         disconnect = source.split("public OnPlayerDisconnect(playerid, reason) {", 1)[1]

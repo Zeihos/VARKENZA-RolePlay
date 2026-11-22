@@ -611,8 +611,15 @@ stock VarkenzaField(const data[], field, out[], size) {
 }
 stock VarkenzaLostSession(playerid) {
     if (PlayerSpectating[playerid]) VarkenzaStopSpectating(playerid);
-    if (PlayerGarageVehicle[playerid] != INVALID_VEHICLE_ID) DestroyVehicle(PlayerGarageVehicle[playerid]);
+    // A revoked staff session must not leave a privileged temporary vehicle
+    // in the world. Clear both IDs before calling DestroyVehicle so a later
+    // callback or reuse of the vehicle slot cannot see stale ownership.
+    new staffVehicle = PlayerStaffVehicle[playerid];
+    PlayerStaffVehicle[playerid] = INVALID_VEHICLE_ID;
+    if (staffVehicle != INVALID_VEHICLE_ID) DestroyVehicle(staffVehicle);
+    new garageVehicle = PlayerGarageVehicle[playerid];
     PlayerGarageVehicle[playerid] = INVALID_VEHICLE_ID;
+    if (garageVehicle != INVALID_VEHICLE_ID) DestroyVehicle(garageVehicle);
     PlayerCarEngine[playerid] = false;
     PlayerLinked[playerid] = false;
     PlayerStaff[playerid] = false;

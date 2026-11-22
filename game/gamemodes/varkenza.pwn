@@ -972,7 +972,13 @@ public VarkenzaGarageReply(index, response_code, data[]) {
 // If a personal vehicle explodes it is no longer considered active in the bridge.
 public OnVehicleDeath(vehicleid, killerid) {
     for (new i = 0; i < MAX_PLAYERS; i++) {
-        if (!IsPlayerConnected(i) || PlayerGarageVehicle[i] != vehicleid) continue;
+        if (!IsPlayerConnected(i)) continue;
+        // Clear destroyed temporary admin vehicles before the server reuses
+        // their vehicle IDs. Otherwise /dv or disconnect can destroy a new car.
+        if (PlayerStaffVehicle[i] == vehicleid) {
+            PlayerStaffVehicle[i] = INVALID_VEHICLE_ID;
+        }
+        if (PlayerGarageVehicle[i] != vehicleid) continue;
         PlayerGarageVehicle[i] = INVALID_VEHICLE_ID;
         PlayerCarEngine[i] = false;
         if (PlayerLinked[i]) {

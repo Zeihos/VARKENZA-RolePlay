@@ -1,0 +1,113 @@
+name: Strict open.RP Pawn compilation
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tools/**"
+      - "upstream/**"
+      - ".gitmodules"
+      - ".github/workflows/openrp-strict-build.yml"
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test staging utilities
+        run: python -m unittest discover -s tools/tests -v
+      - name: Install pinned sampctl 1.16.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://github.com/Southclaws/sampctl/releases/download/1.16.0/sampctl_1.16.0_linux_amd64.tar.gz \
+            --output "$RUNNER_TEMP/sampctl.tar.gz"
+          echo "7a39a208a633ac1a73a17af1764845fdfe7aa348e056ea25e23e9d1b61e70718  $RUNNER_TEMP/sampctl.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/sampctl-bin" "$HOME/.local/bin"
+          tar -xf "$RUNNER_TEMP/sampctl.tar.gz" -C "$RUNNER_TEMP/sampctl-bin"
+          binary="$(find "$RUNNER_TEMP/sampctl-bin" -type f -name sampctl -print -quit)"
+          test -n "$binary"
+          install -m 0755 "$binary" "$HOME/.local/bin/sampctl"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Prepare isolated open.RP runtime
+        env:
+          VARKENZA_MYSQL_PASSWORD: ci-local-mysql-placeholder-only
+          VARKENZA_RCON_PASSWORD: ci-local-rcon-placeholder-only
+        run: python tools/prepare_openrp.py
+      - name: Build real Pawn bytecode
+        id: compile
+        env:
+          SAMPCTL_GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pawn-diagnostics"
+          cd build/openrp
+          sampctl version
+          timeout 600 sampctl ensure --platform linux
+          python ../../tools/ensure_mapandreas.py --runtime .
+          python ../../tools/ensure_mysql_include.py --runtime .
+          # Capture the actual compiler output and retain nonzero exit status.
+          timeout 300 sampctl build dev 2>&1 | tee "$RUNNER_TEMP/pawn-diagnostics/compile.log"
+          test -s gamemodes/main.amx
+      - name: Capture preprocessed listing on failure
+        if: failure()
+        env:
+          SAMPCTL_GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/pawn-diagnostics"
+          if [ ! -f build/openrp/pawn.json ]; then exit 0; fi
+          python - <<'PY'
+          import copy, json
+          from pathlib import Path
+          path = Path("build/openrp/pawn.json")
+          data = json.loads(path.read_text())
+          dev = next((b for b in data.get("builds", []) if b.get("name") == "dev"), None)
+          if dev is None:
+              raise SystemExit(0)
+          listing = copy.deepcopy(dev)
+          listing["name"] = "diagnostic-listing"
+          listing["args"] = [arg for arg in dev.get("args", []) if arg != "-l"] + ["-l"]
+          data["builds"].append(listing)
+          path.write_text(json.dumps(data, indent=2))
+          PY
+          cd build/openrp
+          timeout 120 sampctl build diagnostic-listing > "$RUNNER_TEMP/pawn-diagnostics/listing-build.log" 2>&1 || true
+          find gamemodes -name '*.lst' -type f -exec cp {} "$RUNNER_TEMP/pawn-diagnostics/" \; || true
+      - name: Save Pawn diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pawn-build-diagnostics
+          path: ${{ runner.temp }}/pawn-diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Upload AMX only when compiled successfully
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: VARKENZA-openRP-main-amx
+          path: build/openrp/gamemodes/main.amx
+          if-no-files-found: error
+          retention-days: 7
+      - name: Report actual build result
+        if: always()
+        env:
+          BUILD_RESULT: ${{ steps.compile.outcome }}
+        shell: bash
+        run: |
+          {
+            echo "## Strict Pawn compilation"
+            echo "Compiler step: $BUILD_RESULT"
+            echo "Successful compilation requires a nonempty gamemodes/main.amx."
+            echo "This does not validate the MySQL connection or actual SA-MP/open.mp gameplay."
+          } >> "$GITHUB_STEP_SUMMARY"

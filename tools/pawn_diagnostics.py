@@ -6,8 +6,8 @@ from pathlib import Path
 import re
 
 DIAGNOSTIC = re.compile(
-    r"(?P<source>[^\\r\\n]*?):(?P<line>\\d+) \\(error (?P<code>\\d+)\\) "
-    r"(?P<message>[^\\r\\n]+)"
+    r"(?P<source>[^\r\n]*?):(?P<line>\d+) \(error (?P<code>\d+)\) "
+    r"(?P<message>[^\r\n]+)"
 )
 SYMBOL = re.compile(r'"([^"]+)"')
 
@@ -37,14 +37,14 @@ def markdown(text):
                  "| --- | --- | ---: |"]
         for (symbol, code), count in sorted(
                 groups.items(), key=lambda x: (-x[1], x[0])):
-            escaped = symbol.replace("|", r"\\|").replace("`", "'")
+            escaped = symbol.replace("|", r"\|").replace("`", "'")
             rows.append(f"| `{escaped}` | {code} | {count} |")
     else:
         rows += ["No Pawn error diagnostics found in this log.",
                  "This does not prove the game compiled successfully."]
     rows += ["", "A successful build requires a nonempty main.amx.",
              "Error counts can be truncated by the Pawn compiler's diagnostic limit."]
-    return "\\n".join(rows) + "\\n"
+    return "\n".join(rows) + "\n"
 
 
 def main():

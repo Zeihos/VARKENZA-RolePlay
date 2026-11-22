@@ -44,7 +44,7 @@ def required_env(env):
 
 
 def replace_one(contents, pattern, replacement, label):
-    patched, count = re.subn(pattern, lambda _: replacement, contents, count=1, flags=re.MULTILINE)
+    patched, count = re.subn(pattern, replacement, contents, count=1, flags=re.MULTILINE)
     if count != 1:
         raise ValueError(f'Upstream layout changed: missing {label}; refusing unsafe patch')
     return patched
@@ -52,22 +52,30 @@ def replace_one(contents, pattern, replacement, label):
 
 def patch_sources(destination, settings):
     pwn = destination / 'gamemodes' / 'main.pwn'
-    text = pwn.read_text(encoding='utf-8-sig', errors='replace')
-    text = replace_one(text, r'^#define[ \t]+SERVER_NAME[ \t]+"open\.RP"[ \t]*$',
-                       '#define SERVER_NAME "VARKENZA ROLEPLAY"', 'SERVER_NAME')
-    text = replace_one(text, r'^#define[ \t]+WEB_URL[ \t]+"https://open\.mp/"[ \t]*$',
-                       '#define WEB_URL "https://varkenza-rp.com/"', 'WEB_URL')
-    # Linux build hosts resolve includes case-sensitively; upstream has rbits.inc.
-    text = replace_one(text, r'^#include[ \t]+<rBits>(?:[ \t]*//[^\n]*)?[ \t]*$',
-                       '#include <rbits>', 'legacy rBits include')
-    pwn.write_text(text, encoding='utf-8')
+    # Legacy Pawn files may use CP1251 (or mixed 8-bit comments). Keep every
+    # byte untouched except the exact ASCII configuration lines we replace.
+    original = pwn.read_bytes()
+    patched = replace_one(original,
+                          rb'^#define[ \t]+SERVER_NAME[ \t]+"open\.RP"[ \t]*(\r?)$',
+                          lambda m: b'#define SERVER_NAME "VARKENZA ROLEPLAY"' + m.group(1),
+                          'SERVER_NAME')
+    patched = replace_one(patched,
+                          rb'^#define[ \t]+WEB_URL[ \t]+"https://open\.mp/"[ \t]*(\r?)$',
+                          lambda m: b'#define WEB_URL "https://varkenza-rp.com/"' + m.group(1),
+                          'WEB_URL')
+    patched = replace_one(patched,
+                          rb'^#include[ \t]+<rBits>(?:[ \t]*//[^\r\n]*)?[ \t]*(\r?)$',
+                          lambda m: b'#include <rbits>' + m.group(1),
+                          'legacy rBits include')
+    pwn.write_bytes(patched)
 
     init = destination / 'gamemodes' / 'modules' / 'Server' / 'GameModeInit.pwn'
-    original = init.read_text(encoding='utf-8-sig', errors='replace')
-    original = replace_one(original, r'^\s*SendRconCommand\("password [^"\r\n]*"\);[^\n]*$',
-                           '\t// VARKENZA: never hardcode a server password in source.',
-                           'hardcoded startup password')
-    init.write_text(original, encoding='utf-8')
+    original = init.read_bytes()
+    patched = replace_one(original,
+                          rb'^[ \t]*SendRconCommand\("password [^"\r\n]*"\);[^\r\n]*(\r?)$',
+                          lambda m: b'\t// VARKENZA: never hardcode a server password in source.' + m.group(1),
+                          'hardcoded startup password')
+    init.write_bytes(patched)
 
     manifest = destination / 'pawn.json'
     data = json.loads(manifest.read_text(encoding='utf-8-sig'))

@@ -10,6 +10,7 @@ import stat
 import sys
 
 from normalize_pawn_includes import normalize_pawn_includes
+from namespace_pawn_modules import namespace_pawn_modules
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_DIRS = ('gamemodes', 'filterscripts', 'legacy', 'Maps', 'models', 'plugins', 'scriptfiles')
@@ -135,6 +136,9 @@ def prepare(source, destination, env, replace=False):
                 shutil.copy2(source_file, destination / name)
         patch_sources(destination, settings)
         normalize_pawn_includes(destination)
+        # Legacy pawncc (-Z+) guards only by filename, not full path or extension.
+        # Give each staged .pwn module a unique filename without editing upstream.
+        namespace_pawn_modules(destination)
     except Exception:
         shutil.rmtree(destination)
         raise

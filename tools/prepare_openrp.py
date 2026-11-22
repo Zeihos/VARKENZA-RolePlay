@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 import sys
+import tempfile
 
 from normalize_pawn_includes import normalize_pawn_includes
 from namespace_pawn_modules import namespace_pawn_modules
@@ -115,32 +116,44 @@ def prepare(source, destination, env, replace=False):
     if any(not (source / d).is_dir() for d in REQUIRED_DIRS):
         raise ValueError('Incomplete upstream checkout: expected game directories not found')
     settings = required_env(env)
-    if destination.exists():
-        if not replace or not (destination / MARKER).is_file():
-            raise ValueError('Destination exists. Only an earlier generated directory can be replaced with --replace')
-        shutil.rmtree(destination)
-    destination.mkdir(parents=True)
-    try:
+    if destination.exists() and (not replace or not (destination / MARKER).is_file()):
+        raise ValueError('Destination exists. Only an earlier generated directory can be replaced with --replace')
+
+    # Prepare everything beside the destination first. A failed build must never
+    # destroy the previous working copy (including its private configuration).
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='.varkenza-stage-', dir=destination.parent) as workspace:
+        staged = Path(workspace) / 'runtime'
+        staged.mkdir()
         for name in REQUIRED_DIRS:
-            shutil.copytree(source / name, destination / name,
+            shutil.copytree(source / name, staged / name,
                             ignore=shutil.ignore_patterns('.git', '*.log', 'README.md', 'main.amx'))
         for name in ('pawn.json', 'open_rp.sql', 'LICENSE'):
             source_file = source / name
             if source_file.is_file():
-                shutil.copy2(source_file, destination / name)
-        # Windows plugins in the pinned upstream reference these runtime DLLs.
-        # Copy them from the checked-out upstream; never vendor binary blobs here.
+                shutil.copy2(source_file, staged / name)
+        # Windows plugins use these DLLs from the pinned upstream checkout.
         for name in ('libmariadb.dll', 'log-core.dll'):
             source_file = source / name
             if source_file.is_file():
-                shutil.copy2(source_file, destination / name)
-        patch_sources(destination, settings)
-        normalize_pawn_includes(destination)
-        # Fix Pawn -Z+ name-only include guards in the private staged copy.
-        namespace_pawn_modules(destination)
-    except Exception:
-        shutil.rmtree(destination)
-        raise
+                shutil.copy2(source_file, staged / name)
+        patch_sources(staged, settings)
+        normalize_pawn_includes(staged)
+        namespace_pawn_modules(staged)
+
+        backup = Path(workspace) / 'previous'
+        had_previous = destination.exists()
+        if had_previous:
+            # Re-check before moving anything to avoid replacing an unexpected path.
+            if not replace or not (destination / MARKER).is_file():
+                raise ValueError('Destination changed during preparation; refusing to replace it')
+            destination.rename(backup)
+        try:
+            staged.rename(destination)
+        except BaseException:
+            if had_previous:
+                backup.rename(destination)
+            raise
     return destination
 
 

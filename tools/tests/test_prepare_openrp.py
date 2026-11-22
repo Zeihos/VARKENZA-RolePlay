@@ -60,6 +60,34 @@ class PreparationTests(unittest.TestCase):
                 prepare(src, output, PASSWORDS)
             prepare(src, output, PASSWORDS, replace=True)
 
+    def test_legacy_cp1251_comments_and_crlf_survive_branding(self):
+        with tempfile.TemporaryDirectory() as root:
+            src = self.fixture(root)
+            main = src / 'gamemodes/main.pwn'
+            init = src / 'gamemodes/modules/Server/GameModeInit.pwn'
+            comment = '// Привет из старого мода'.encode('cp1251')
+            main.write_bytes(
+                b'#define SERVER_NAME "open.RP"\r\n'
+                + comment + b'\r\n'
+                + b'#define WEB_URL "https://open.mp/"\r\n'
+                + b'#include <rBits> // legacy\r\n'
+            )
+            init.write_bytes(
+                comment + b'\r\n'
+                + b'    SendRconCommand("password oldsecret"); // old\r\n'
+            )
+            output = Path(root) / 'runtime'
+            prepare(src, output, PASSWORDS)
+            main_bytes = (output / 'gamemodes/main.pwn').read_bytes()
+            staged_init = next((output / 'gamemodes/modules/Server').glob('vkmod_*_GameModeInit.pwn')).read_bytes()
+            self.assertIn(comment + b'\r\n', main_bytes)
+            self.assertIn(comment + b'\r\n', staged_init)
+            self.assertNotIn(b'\xef\xbf\xbd', main_bytes + staged_init)
+            self.assertIn(b'#define SERVER_NAME "VARKENZA ROLEPLAY"\r\n', main_bytes)
+            self.assertIn(b'#include <rbits>\r\n', main_bytes)
+            self.assertNotIn(b'oldsecret', staged_init)
+            self.assertEqual(main.read_bytes().splitlines()[1], comment)
+
     def test_failed_replacement_preserves_previous_runtime(self):
         with tempfile.TemporaryDirectory() as root:
             src = self.fixture(root)

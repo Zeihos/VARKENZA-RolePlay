@@ -27,20 +27,25 @@ class VehicleLifecycleTests(unittest.TestCase):
         )
         self.assertIn("if (!IsPlayerConnected(i)) continue;", handler)
 
-    def test_revoked_staff_session_destroys_temporary_vehicle(self):
+    def test_all_staff_revocation_paths_clean_up_temporary_vehicle(self):
         source = GAME.read_text(encoding="utf-8")
-        lost = source.split("stock VarkenzaLostSession(playerid) {", 1)[1]
-        lost = lost.split("\npublic VarkenzaLinkReply(", 1)[0]
-        self.assertIn("new staffVehicle = PlayerStaffVehicle[playerid];", lost)
-        self.assertIn("PlayerStaffVehicle[playerid] = INVALID_VEHICLE_ID;", lost)
-        self.assertIn("DestroyVehicle(staffVehicle);", lost)
-        self.assertIn("new garageVehicle = PlayerGarageVehicle[playerid];", lost)
+        helper = source.split("stock VarkenzaRevokeStaff(playerid) {", 1)[1].split("\nstock VarkenzaLostSession(", 1)[0]
+        self.assertIn("PlayerStaff[playerid] = false;", helper)
+        self.assertIn("if (PlayerSpectating[playerid]) VarkenzaStopSpectating(playerid);", helper)
+        self.assertIn("new vehicleid = PlayerStaffVehicle[playerid];", helper)
+        self.assertLess(helper.index("PlayerStaffVehicle[playerid] = INVALID_VEHICLE_ID;"),
+                        helper.index("DestroyVehicle(vehicleid);"))
+        lost = source.split("stock VarkenzaLostSession(playerid) {", 1)[1].split("\npublic VarkenzaLinkReply(", 1)[0]
+        self.assertIn("VarkenzaRevokeStaff(playerid);", lost)
         self.assertIn("PlayerGarageVehicle[playerid] = INVALID_VEHICLE_ID;", lost)
         self.assertIn("DestroyVehicle(garageVehicle);", lost)
-        self.assertLess(lost.index("PlayerStaffVehicle[playerid] = INVALID_VEHICLE_ID;"),
-                        lost.index("DestroyVehicle(staffVehicle);"))
-        self.assertLess(lost.index("PlayerGarageVehicle[playerid] = INVALID_VEHICLE_ID;"),
-                        lost.index("DestroyVehicle(garageVehicle);"))
+        ping = source.split("public VarkenzaPingReply(", 1)[1].split("\npublic VarkenzaAckReply(", 1)[0]
+        self.assertIn('if (!strcmp(commandId, "STAFF_OFF")) VarkenzaRevokeStaff(playerid);', ping)
+        staff_off = source.split("public VarkenzaStaffOffReply(", 1)[1].split("\npublic VarkenzaStaffCommandReply(", 1)[0]
+        self.assertIn("if (response_code != 200) return SendClientMessage", staff_off)
+        self.assertEqual(staff_off.count("VarkenzaRevokeStaff(playerid);"), 2)
+        staff_cmd = source.split("public VarkenzaStaffCommandReply(", 1)[1]
+        self.assertIn("if (response_code == 401 || response_code == 403) VarkenzaRevokeStaff(playerid);", staff_cmd)
 
     def test_disconnect_and_staff_delete_reset_the_vehicle_reference(self):
         source = GAME.read_text(encoding="utf-8")
